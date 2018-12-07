@@ -13,11 +13,6 @@
 #include <ESP8266HTTPClient.h>
 #include "config.h"
 
-typedef struct Position {
-    double x;
-    double y;
-} Position;
-
 // connection pins
 #if defined(ESP8266)
 const uint8_t PIN_SS = 15;
@@ -26,27 +21,13 @@ const uint8_t PIN_RST = 9;
 const uint8_t PIN_SS = SS; // spi select pin
 #endif
 
-
-Position position_self = {0,0};
-Position position_B = {3,0};
-Position position_C = {3,2.5};
-
-double range_self;
-double range_B;
-double range_C;
-
-boolean received_B = false;
-
 byte target_eui[8];
 byte tag_shortAddress[] = {0x05, 0x00};
 
 uint16_t tagAddress = 5;
 
 uint16_t this_anchor = 1;
-
-byte anchor_b[] = {0x02, 0x00};
 uint16_t next_anchor = 2;
-byte anchor_c[] = {0x03, 0x00};
 
 device_configuration_t DEFAULT_CONFIG = {
     false,
@@ -138,7 +119,6 @@ void loop() {
 
             RangeAcceptResult result = DW1000NgRTLS::anchorRangeAccept(NextActivity::RANGING_CONFIRM, next_anchor);
             if(!result.success) return;
-            range_self = result.range;
 
             // Call server
             HTTPClient http;
@@ -148,7 +128,7 @@ void loop() {
                 request += "&tag=";
                 request += tagAddress;
                 request += "&range=";
-                request += range_self;
+                request += result.range;
             http.begin(SERVER_URL);
             http.addHeader("Content-Type", "application/x-www-form-urlencoded");
             int httpCode = http.POST(request);
