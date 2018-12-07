@@ -9,6 +9,8 @@
 #include <DW1000NgUtils.hpp>
 #include <DW1000NgRanging.hpp>
 #include <DW1000NgRTLS.hpp>
+#include <ESP8266WiFi.h>
+
 
 // connection pins
 #if defined(ESP8266)
@@ -51,6 +53,18 @@ frame_filtering_configuration_t ANCHOR_FRAME_FILTER_CONFIG = {
 void setup() {
     // DEBUG monitoring
     Serial.begin(115200);
+    Serial.println();
+    WiFi.begin("", "");
+
+    Serial.print("Connecting");
+    while (WiFi.status() != WL_CONNECTED)
+    {
+      delay(500);
+      Serial.print(".");
+    }
+    Serial.println();
+    Serial.print("Connected, IP address: ");
+    Serial.println(WiFi.localIP());
     Serial.println(F("### arduino-DW1000Ng-ranging-anchor-B ###"));
     // initialize the driver
     #if defined(ESP8266)
