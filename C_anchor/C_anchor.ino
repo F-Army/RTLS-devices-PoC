@@ -10,6 +10,8 @@
 #include <DW1000NgRanging.hpp>
 #include <DW1000NgRTLS.hpp>
 #include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include "config.h"
 
 // connection pins
 #if defined(ESP8266)
@@ -19,9 +21,8 @@ const uint8_t PIN_RST = 9;
 const uint8_t PIN_SS = SS; // spi select pin
 #endif
 
-double range_self;
-
-byte main_anchor_address[] = {0x01, 0x00};
+uint16_t this_anchor = 3;
+uint16_t tagAddress = 5;
 
 uint16_t blink_rate = 200;
 
@@ -54,7 +55,7 @@ void setup() {
     // DEBUG monitoring
    Serial.begin(115200);
     Serial.println();
-    WiFi.begin("", "");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.print("Connecting");
     while (WiFi.status() != WL_CONNECTED)
@@ -101,26 +102,27 @@ void setup() {
     DW1000Ng::getPrintableDeviceMode(msg);
     Serial.print("Device mode: "); Serial.println(msg);
 }
-
-void transmitRangeReport() {
-    byte rangingReport[] = {DATA, SHORT_SRC_AND_DEST, DW1000NgRTLS::increaseSequenceNumber(), 0,0, 0,0, 0,0, 0x60, 0,0 };
-    DW1000Ng::getNetworkId(&rangingReport[3]);
-    memcpy(&rangingReport[5], main_anchor_address, 2);
-    DW1000Ng::getDeviceAddress(&rangingReport[7]);
-    DW1000NgUtils::writeValueToBytes(&rangingReport[10], static_cast<uint16_t>((range_self*1000)), 2);
-    DW1000Ng::setTransmitData(rangingReport, sizeof(rangingReport));
-    DW1000Ng::startTransmit();
-}
  
 void loop() {
      RangeAcceptResult result = DW1000NgRTLS::anchorRangeAccept(NextActivity::ACTIVITY_FINISHED, blink_rate);
      if(result.success) {
-        delay(1); // Tweak based on your hardware
-        range_self = result.range;
-        transmitRangeReport();
-
-        String rangeString = "Range: "; rangeString += range_self; rangeString += " m";
-        rangeString += "\t RX power: "; rangeString += DW1000Ng::getReceivePower(); rangeString += " dBm";
-        Serial.println(rangeString);
-     }
+        HTTPClient http;
+        String request = "";
+            request += "anchor=";
+            request += this_anchor;
+            request += "&tag=";
+            request += tagAddress;
+            request += "&range=";
+            request += result.range;
+        http.begin(SERVER_URL);
+        http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+        int httpCode = http.POST(request);
+        String payload = http.getString();
+        Serial.print("Range sent: ");
+        Serial.print(httpCode);
+        Serial.print(" ");
+        Serial.print(payload);
+        Serial.println();
+        http.end();
+    }
 }

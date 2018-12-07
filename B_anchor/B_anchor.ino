@@ -54,7 +54,7 @@ void setup() {
     // DEBUG monitoring
     Serial.begin(115200);
     Serial.println();
-    WiFi.begin("", "");
+    WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
 
     Serial.print("Connecting");
     while (WiFi.status() != WL_CONNECTED)
