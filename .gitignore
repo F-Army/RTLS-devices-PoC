@@ -1,3 +1,6 @@
 Main_anchor/config.h
 B_anchor/config.h
 C_anchor/config.h
+Arduino-proMini-3.3V/Main_anchor/config.h
+Arduino-proMini-3.3V/B_anchor/config.h
+Arduino-proMini-3.3V/C_anchor/config.h
